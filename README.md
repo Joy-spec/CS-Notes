@@ -42,11 +42,11 @@
 
 ## :floppy_disk: 数据库
 
-- [数据库系统原理](https://github.com/CyC2018/CS-Notes/blob/master/notes/数据库系统原理.md)
-- [SQL](https://github.com/CyC2018/CS-Notes/blob/master/notes/SQL.md)
-- [Leetcode-Database 题解](https://github.com/CyC2018/CS-Notes/blob/master/notes/Leetcode-Database%20题解.md)
-- [MySQL](https://github.com/CyC2018/CS-Notes/blob/master/notes/MySQL.md)
-- [Redis](https://github.com/CyC2018/CS-Notes/blob/master/notes/Redis.md)
+- [数据库系统原理](https://github.com/Joy-spec/CS-Notes/blob/master/notes/数据库系统原理.md)
+- [SQL](https://github.com/Joy-spec/CS-Notes/blob/master/notes/SQL.md)
+- [Leetcode-Database 题解](https://github.com/Joy-spec/CS-Notes/blob/master/notes/Leetcode-Database%20题解.md)
+- [MySQL](https://github.com/Joy-spec/CS-Notes/blob/master/notes/MySQL.md)
+- [Redis](https://github.com/Joy-spec/CS-Notes/blob/master/notes/Redis.md)
 
 ## :coffee: Java
 
