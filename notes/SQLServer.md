@@ -1,0 +1,307 @@
+# 建表
+1. 假设某微博平台的数据库中有下列关系，请在DBMS中创建这些关系，包括主码和外码的说明，并写出指定关系的建表SQL语句：
+
+用户【用户ID，姓名，性别，出生年份，所在城市】记录所有注册用户的基本信息，英文表名和字段名如下：
+
+USER(UID 整型，NAME 字符串，SEX 一位汉字，BYEAR 整型，CITY 字符串 )；
+```
+用户建表语句：
+CREATE TABLE USER_WB(
+	UID INT PRIMARY KEY,
+	NAME CHAR(10) ,
+	SEX CHAR(2),
+	BYEAR INT,
+	CITY CHAR(10)
+);
+```
+
+2. 分类【分类ID，分类名称】记录微博平台中所有可能涉及的微博的类型，例如文学、艺术、军事等，英文表名和字段名如下：
+
+LABEL(LID 整型，LNAME 字符串)；
+```
+CREATE TABLE LABEL(
+	LID INT PRIMARY KEY,
+	LNAME CHAR(10)
+);
+```
+
+3. 博文【博文ID，标题，用户ID，年，月，日，正文】记录每一篇微博的基本信息，英文表名和字段名如下：
+
+MBLOG(BID 整型，TITLE 字符串，UID 整型，PYEAR 整型，PMONTH 整型， PDAY 整型，CONT 字符串)，
+```
+CREATE TABLE MBLOG(
+	BID INT PRIMARY KEY,
+	TITLE CHAR(10),
+	UID INT,
+	PYEAR INT,
+	PMONTH INT,
+	PDAY INT,
+	CONT CHAR(180),
+	FOREIGN KEY (UID) REFERENCES USER_WB(UID)
+);
+```
+
+4. 博文标注【博文ID，分类ID】记录每一篇微博的作者给该微博贴上的分类标签，一篇微博可以涉及不止一种分类，英文表名和字段名如下：
+
+B_L(BID 整型，LID 整型)；
+```
+CREATE TABLE B_L(
+	BID INT,
+	LID INT,
+	PRIMARY KEY (BID,LID),
+	FOREIGN KEY (BID) REFERENCES MBLOG(BID),
+	FOREIGN KEY(LID) REFERENCES LABEL(LID)
+);
+```
+
+5. 关注【用户ID，被关注用户ID】记录每位用户关注的其他用户，每位用户可关注多人，英文表名和字段名如下：
+
+FOLLOW(UID 整型，UIDFLED 整型)；
+```
+CREATE TABLE FOLLOW(
+	UID INT,
+	UIDFLED INT,
+	PRIMARY KEY (UID,UIDFLED),
+	FOREIGN KEY (UID) REFERENCES USER_WB(UID),
+	FOREIGN KEY (UIDFLED) REFERENCES USER_WB(UID)
+);
+```
+
+6. 好友【用户ID， 好友ID】记录每位用户的好友（可多个），英文表名和字段名如下：
+
+FRIENDS(UID 整型，FUID 整型);
+```
+CREATE TABLE FRIENDS(
+	UID INT,
+	FUID INT,
+	PRIMARY KEY (UID,FUID),
+	FOREIGN KEY (UID) REFERENCES USER_WB(UID),
+	FOREIGN KEY (FUID) REFERENCES USER_WB(UID)
+);
+```
+
+7. 订阅【用户ID, 订阅分类ID】记录用户订阅的每一种分类，英文表名和字段名如下：
+
+SUB(UID 整型，LID 整型);
+```
+CREATE TABLE SUB(
+	UID INT,
+	LID INT,
+	PRIMARY KEY (UID,LID),
+	FOREIGN KEY (UID) REFERENCES USER_WB(UID),
+	FOREIGN KEY (LID) REFERENCES LABEL(LID)
+);
+```
+
+8. 点赞【用户ID， 博文ID】记录用户点赞的每一篇微博，英文表名和字段名如下：
+
+THUMB(UID 整型，BID 整型)，
+```
+CREATE TABLE THUMB(
+	UID INT,
+	BID INT,
+	PRIMARY KEY(UID,BID),
+	FOREIGN KEY (UID) REFERENCES USER_WB(UID),
+	FOREIGN KEY (BID) REFERENCES MBLOG(BID)
+);
+```
+
+9. 头条【年，月，日，博文ID，顺序号】记录每一天的热度排名前十的博文ID号以及该博文在热度前十名中的排名，英文表名和字段名如下：
+
+TOPDAY(TYEAR整型，TMONTH 整型，TDAY 整型，BID 整型，TNO 整型)。
+```
+CREATE TABLE TOPDAY(
+	TYEAR INT,
+	TMONTH INT,
+	TDAY INT,
+	BID INT,
+	TNO INT,
+	PRIMARY KEY (TYEAR,TMONTH,TDAY,TNO),
+	FOREIGN KEY (BID) REFERENCES MBLOG(BID)
+);
+```
+---
+1. 分别用一条sql语句完成对博文表基本的增、删、改的操作；
+```
+增加：用insert语句
+--按照默认顺序插入
+INSERT INTO MBLOG
+VALUES(8,'六',10,2010,3,4,'BEAUTY DAY'); 
+--按照给定顺序插入
+INSERT INTO MBLOG(BID,TITLE,UID,PMONTH,PDAY,PYEAR,CONT)
+VALUES(9,'风',10,3,4,2010,'BEAUTY DAY'); 
+删除：用delete语句
+DELETE FROM MBLOG WHERE BID = 7;
+改：用update
+UPDATE MBLOG SET TITLE = '雨' WHERE BID = 8;
+```
+
+2. 批处理操作
+将关注3号用户的用户信息插入到一个自定义的新表FANS_3中。
+```
+INSERT INTO FANS_3
+SELECT * FROM USER_WB 
+WHERE UID IN(
+SELECT UID FROM FOLLOW WHERE UIDFLED = 3)
+```
+
+# 查询
+1. 查询“张三”用户关注的所有用户的ID号、姓名、性别、出生年份，所在城市，并且按照出生年份的降序排列，同一个年份的则按照用户ID号升序排列。
+```
+SELECT * FROM USER_WB
+	WHERE UID IN
+		(SELECT UIDFLED FROM FOLLOW
+			WHERE UID = 
+				(SELECT UID FROM USER_WB
+					WHERE NAME = '张三')
+					)
+ORDER BY BYEAR DESC, UID;
+```
+
+2. 查找没有被任何人点赞的博文ID、标题以及发表者姓名，并将结果按照标题字符顺序排列。
+```
+SELECT MBLOG.BID,MBLOG.TITLE,USER_WB.NAME 
+FROM MBLOG,USER_WB 
+WHERE BID NOT IN
+(SELECT BID FROM THUMB) AND MBLOG.UID = USER_WB.UID
+ORDER BY TITLE DESC;
+```
+ 
+3.查找2000年以后出生的武汉市用户发表的进入过头条的博文ID；
+```
+SELECT USER_WB.UID,USER_WB.BYEAR,USER_WB.CITY,MBLOG.BID
+FROM USER_WB,MBLOG
+WHERE USER_WB.UID = MBLOG.UID AND MBLOG.BID IN
+(SELECT  BID FROM TOPDAY) AND USER_WB.CITY = '武汉'
+AND USER_WB.BYEAR > 2000;
+```
+ 
+4. 查找订阅了所有分类的用户ID；
+```
+SELECT UID FROM SUB GROUP BY UID
+HAVING COUNT(LID)  = 
+(SELECT COUNT(LABEL.LID) FROM LABEL);
+```
+
+5. 查找出生年份小于1970年或者大于2010年的用户ID、出生年份、所在城市，要求where子句中只能有一个条件表达式；
+```
+可以用between and 来表示一个范围来避免where子句中有多个条件表达式
+SELECT UID,NAME,BYEAR,CITY
+FROM USER_WB WHERE 
+BYEAR NOT BETWEEN 1997 AND 2007;
+```
+6. 统计每个城市的用户数；
+```
+SELECT COUNT(UID)USER_AMOUNT_IN_CITY,CITY  
+FROM USER_WB GROUP BY CITY
+ORDER BY USER_AMOUNT_IN_CITY DESC;
+```
+7. 统计每个城市的每个出生年份的用户数，并将结果按照城市的升序排列，同一个城市按照出生用户数的降序排列其相应的年份；
+```
+将城市和出生年份一起作为分组的依据
+SELECT COUNT(UID) BORN_NUM_CITY_YEAR ,CITY,BYEAR 
+FROM USER_WB GROUP BY CITY,BYEAR
+ORDER BY CITY ,BORN_NUM_CITY_YEAR DESC;
+```
+ 
+8. 查找被点赞数超过10的博文ID号；
+```
+SELECT COUNT(UID) THUMB_NUM, BID FROM THUMB GROUP BY BID
+--HAVING THUMB_NUM > 1; 单行注释，这里列名THUMB_NUM无效，因为列名在数据选择完成后才创建
+--而HAVING语句在选择过程中执行
+HAVING COUNT(UID) > 10;
+```
+9. 查找被2000年后出生的用户点赞数超过10的博文ID号；
+```
+SELECT THUMB.BID
+FROM THUMB,USER_WB
+WHERE THUMB.UID = USER_WB.UID AND USER_WB.BYEAR > 2000
+GROUP BY THUMB.BID
+HAVING COUNT(THUMB.UID) > 10;
+```
+10. 查找被2000年后出生的用户点赞数超过10的每篇博文的进入头条的次数；
+```
+SELECT COUNT(BID) TOPDAY_NUM,BID FROM TOPDAY
+WHERE BID = (
+SELECT THUMB.BID
+FROM THUMB,USER_WB
+WHERE THUMB.UID = USER_WB.UID AND USER_WB.BYEAR > 2000
+GROUP BY THUMB.BID
+HAVING COUNT(THUMB.UID) > 1
+)
+GROUP BY BID;
+```
+11.查找订阅了文学、艺术、哲学、音乐中至少一种分类的用户ID，要求不能使用嵌套查询，且where子句中最多只能包含两个条件；
+```
+因为不能使用嵌套查询，因此使用连接来代替嵌套
+SELECT DISTINCT SUB.UID
+FROM SUB,LABEL
+WHERE LABEL.LNAME IN ('文学','艺术','哲学','音乐')
+AND SUB.LID = LABEL.LID; 
+12）查找标题中包含了“最多地铁站”和“_华中科技大学”两个词的博文基本信息；
+SELECT * FROM MBLOG
+WHERE TITLE LIKE '%最多地铁站%' AND 
+TITLE LIKE '\_华中科技大学'
+ESCAPE '\';
+```
+13. 查找所有相互关注的用户对的两个ID号，要求不能使用嵌套查询；
+```
+通过表的自身连接实现查询
+SELECT ID.UID ID_USER,FOL.UID ID_FOL
+FROM FOLLOW ID ,FOLLOW FOL
+WHERE ID.UIDFLED = FOL.UID AND FOL.UIDFLED = ID.UID;
+```
+14. 查找好友圈包含了5号用户好友圈的用户ID；
+```
+设该用户为A，则对于任意一个用户，如果5号关注了他，那么A关注他。
+可以转化为：
+不存在一个用户，如果5号关注了他，但是A没有关注他
+SELECT UID FROM USER_WB 
+WHERE UID != 5 AND NOT EXISTS(
+	SELECT * FROM FRIENDS F1
+	WHERE F1.UID = 5 AND NOT EXISTS (
+		SELECT * FROM FRIENDS F2 
+		WHERE F2.UID = USER_WB.UID AND F2.FUID = F1.FUID)
+		)
+ ```
+15.查找2019年4月20日每一篇头条博文的ID号、标题以及该博文的每一个分类ID，要求即使该博文没有任何分类ID也要输出其ID号、标题；
+```
+按照要求，应该使用外连接而不是等值连接
+SELECT TOPDAY.BID,TITLE,B_L.LID,LNAME
+FROM TOPDAY LEFT OUTER JOIN MBLOG ON (TOPDAY.BID = MBLOG.BID)
+	 LEFT OUTER JOIN B_L ON (MBLOG.BID = B_L.BID)
+	 LEFT OUTER JOIN LABEL ON (B_L.LID = LABEL.LID)
+WHERE   TYEAR = 2019 AND TMONTH = 4 AND TDAY = 20
+```
+ 
+16. 查找至少有3名共同好友的所有用户对的两个ID号。
+```
+SELECT FR1.UID F1_UID,FR2.UID F2_UID,COUNT (FR1.UID) COMMOM_FRI_NUM
+FROM FRIENDS FR1, FRIENDS FR2
+WHERE FR1.FUID = FR2.FUID AND FR1.UID != FR2.UID
+GROUP BY FR1.UID , FR2.UID
+HAVING COUNT(FR1.UID)>3;
+```
+17. 创建视图：查阅DBMS内部函数，创建一个显示当日热度排名前十的微博信息的视图，其中的属性包括：博文ID、博文标题、发表者ID、发表者姓名、被点赞数。
+```
+CREATE VIEW HOT_WB 
+AS
+SELECT TOP 10 TOPDAY.BID,MBLOG.TITLE,MBLOG.UID,
+	USER_WB.NAME,COUNT(THUMB.UID) THU_NUM
+FROM TOPDAY,MBLOG,USER_WB,THUMB
+WHERE TYEAR = 2019 AND TMONTH = 4 AND TDAY = 20
+AND TOPDAY.BID = MBLOG.BID 
+AND MBLOG.UID = USER_WB.UID
+AND MBLOG.BID = ANY(
+SELECT MBLOG.BID FROM MBLOG 
+LEFT OUTER JOIN THUMB ON (MBLOG.BID = THUMB.BID)
+)
+GROUP BY TOPDAY.BID,MBLOG.TITLE,MBLOG.UID,USER_WB.NAME
+ORDER BY COUNT(THUMB.UID) DESC;
+```
+
+
+
+
+
+
